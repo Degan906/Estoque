@@ -41,7 +41,7 @@ st.markdown(
 )
 
 # Exibir logo centralizado
-st.markdown('<div class="logo"><img src="https://via.placeholder.com/150" alt="Logo"></div>', unsafe_allow_html=True)
+st.markdown('<div class="logo"><img src="https://png.pngtree.com/png-vector/20191003/ourmid/pngtree-user-login-or-authenticate-icon-on-gray-background-flat-icon-ve-png-image_1786166.jpg" alt="Logo"></div>', unsafe_allow_html=True)
 
 # Campos de login
 st.title("Login")
