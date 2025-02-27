@@ -7,7 +7,7 @@ import io
 st.set_page_config(page_title="Controle de Vendas e Estoque", layout="wide")
 
 # Configurações do GitHub
-GITHUB_TOKEN = "SEU_TOKEN_DO_GITHUB"  # Substitua pelo seu token do GitHub
+GITHUB_TOKEN = "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"  # Token fornecido
 REPO_OWNER = "Degan906"
 REPO_NAME = "Estoque"
 BRANCH = "main"
