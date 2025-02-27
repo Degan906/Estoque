@@ -2,12 +2,14 @@ import streamlit as st
 import pandas as pd
 import requests
 import io
+import os
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 
 # Configuração da página
 st.set_page_config(page_title="Controle de Vendas e Estoque", layout="wide")
 
 # Configurações do GitHub
-GITHUB_TOKEN = "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"  # Substitua pelo seu token
+GITHUB_TOKEN = "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"  # Substitua pelo seu token
 REPO_OWNER = "Degan906"
 REPO_NAME = "Estoque"
 BRANCH = "main"
