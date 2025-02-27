@@ -7,7 +7,7 @@ import io
 st.set_page_config(page_title="Controle de Vendas e Estoque", layout="wide")
 
 # Configurações do GitHub
-GITHUB_TOKEN = "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"  # Token fornecido
+GITHUB_TOKEN = "SEU_GITHUB_PAT"  # Substitua pelo seu token
 REPO_OWNER = "Degan906"
 REPO_NAME = "Estoque"
 BRANCH = "main"
@@ -15,11 +15,19 @@ BRANCH = "main"
 # Função para baixar arquivo CSV do GitHub
 def download_csv(file_name):
     url = f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/{BRANCH}/{file_name}"
-    response = requests.get(url)
-    if response.status_code == 200:
+    st.write(f"Tentando baixar: {url}") # debug
+    try:
+        response = requests.get(url)
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
+        st.write(f"Download bem-sucedido: {file_name}") # debug
         return pd.read_csv(io.StringIO(response.text))
-    else:
+    except requests.exceptions.HTTPError as e:
+        st.error(f"Erro HTTP ao baixar {file_name}: {e} - Status code: {e.response.status_code}")
         return pd.DataFrame()
+    except Exception as e:
+        st.error(f"Erro inesperado ao baixar {file_name}: {e}")
+        return pd.DataFrame()
+
 
 # Função para atualizar arquivo CSV no GitHub
 def update_csv(file_name, df):
@@ -28,28 +36,46 @@ def update_csv(file_name, df):
         "Authorization": f"token {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json"
     }
-    # Obter o SHA do arquivo existente
-    response = requests.get(url, headers=headers)
-    if response.status_code == 200:
+    try:
+        # Obter o SHA do arquivo existente
+        response = requests.get(url, headers=headers)
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         sha = response.json().get("sha")
-    else:
-        sha = None  # Arquivo não existe, criar novo
+        st.write(f"SHA obtido: {sha}") # debug
+
+    except requests.exceptions.HTTPError as e:
+        if e.response.status_code == 404:
+            sha = None  # Arquivo não existe, criar novo
+            st.write(f"Arquivo {file_name} não encontrado. Criando novo.") # debug
+        else:
+            st.error(f"Erro HTTP ao obter SHA para {file_name}: {e} - Status code: {e.response.status_code}")
+            return
+    except Exception as e:
+        st.error(f"Erro inesperado ao obter SHA para {file_name}: {e}")
+        return
 
     # Atualizar o conteúdo do arquivo
     content = df.to_csv(index=False)
     data = {
         "message": f"Atualizar {file_name}",
-        "content": content.encode("utf-8").decode("latin1"),
+        "content": content.encode("utf-8"),
         "branch": BRANCH
     }
     if sha:
-        data["sha"] = sha  # Incluir SHA apenas se o arquivo existir
+        data["sha"] = sha
 
-    response = requests.put(url, headers=headers, json=data)
-    if response.status_code in [200, 201]:
+    st.write(f"Dados a serem enviados: {data}") # debug
+    try:
+        response = requests.put(url, headers=headers, json=data)
+        response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
         st.success(f"{file_name} atualizado com sucesso!")
-    else:
-        st.error(f"Erro ao atualizar {file_name}: {response.text}")
+        st.write(f"Resposta da API: {response.json()}") # debug
+
+    except requests.exceptions.HTTPError as e:
+        st.error(f"Erro HTTP ao atualizar {file_name}: {e} - Status code: {e.response.status_code} - Response text: {response.text}")
+    except Exception as e:
+        st.error(f"Erro inesperado ao atualizar {file_name}: {e}")
+
 
 # Carregar dados dos usuários
 users = download_csv("usuarios.csv")
@@ -79,7 +105,7 @@ if not st.session_state.logged_in:
             st.session_state.logged_in = True
             st.session_state.username = username
             st.success(f"Bem-vindo, {username}!")
-            st.rerun()  # Use st.rerun() em vez de st.experimental_rerun()
+            st.rerun()
         else:
             st.error("Usuário ou senha inválidos.")
 else:
