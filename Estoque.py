@@ -1,12 +1,13 @@
 import streamlit as st
 import pandas as pd
 import requests
+import io
 
 # Configuração da página
 st.set_page_config(page_title="Controle de Vendas e Estoque", layout="wide")
 
 # Configurações do GitHub
-GITHUB_TOKEN = "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"  # Substitua pelo seu token do GitHub
+GITHUB_TOKEN = "SEU_TOKEN_DO_GITHUB"  # Substitua pelo seu token do GitHub
 REPO_OWNER = "Degan906"
 REPO_NAME = "Estoque"
 BRANCH = "main"
@@ -16,7 +17,7 @@ def download_csv(file_name):
     url = f"https://raw.githubusercontent.com/{REPO_OWNER}/{REPO_NAME}/{BRANCH}/{file_name}"
     response = requests.get(url)
     if response.status_code == 200:
-        return pd.read_csv(pd.compat.StringIO(response.text))
+        return pd.read_csv(io.StringIO(response.text))
     else:
         return pd.DataFrame()
 
@@ -29,17 +30,23 @@ def update_csv(file_name, df):
     }
     # Obter o SHA do arquivo existente
     response = requests.get(url, headers=headers)
-    sha = response.json().get("sha")
+    if response.status_code == 200:
+        sha = response.json().get("sha")
+    else:
+        sha = None  # Arquivo não existe, criar novo
+
     # Atualizar o conteúdo do arquivo
     content = df.to_csv(index=False)
     data = {
         "message": f"Atualizar {file_name}",
         "content": content.encode("utf-8").decode("latin1"),
-        "sha": sha,
         "branch": BRANCH
     }
+    if sha:
+        data["sha"] = sha  # Incluir SHA apenas se o arquivo existir
+
     response = requests.put(url, headers=headers, json=data)
-    if response.status_code == 200:
+    if response.status_code in [200, 201]:
         st.success(f"{file_name} atualizado com sucesso!")
     else:
         st.error(f"Erro ao atualizar {file_name}: {response.text}")
@@ -72,7 +79,7 @@ if not st.session_state.logged_in:
             st.session_state.logged_in = True
             st.session_state.username = username
             st.success(f"Bem-vindo, {username}!")
-            st.experimental_rerun()
+            st.rerun()  # Use st.rerun() em vez de st.experimental_rerun()
         else:
             st.error("Usuário ou senha inválidos.")
 else:
@@ -81,7 +88,7 @@ else:
     if st.sidebar.button("Sair"):
         st.session_state.logged_in = False
         st.session_state.username = None
-        st.experimental_rerun()
+        st.rerun()
 
     # Menu principal
     menu = ["Cadastro de Produtos", "Registro de Vendas", "Visualizar Estoque", "Relatório de Vendas", "Gerenciar Usuários"]
