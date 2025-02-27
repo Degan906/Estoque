@@ -82,7 +82,7 @@ def update_csv(file_name, df):
 # Carregar dados dos usuários
 users = download_csv("usuarios.csv")
 if users.empty:
-    users = pd.DataFrame({"Usuario": ["admin"], "Senha": ["12345admin"]})
+    users = pd.DataFrame({"Usuario": ["admin"], "Senha": ["12345"]})
     update_csv("usuarios.csv", users)
 
 # Verificar se o usuário está logado
